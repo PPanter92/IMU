@@ -22,7 +22,15 @@ Der Accelerometer /Beschleunigungssensor misst die translatorische Beschleunigun
 ### aus Beschleunigung Winkel berechnen
 
 Auch wenn der Roboter stillsteht, wirkt die Gravitationskraft auf ihn. Je nach Orientierung des Roboters im Raum, verteilt sich diese Kraft auf die 3 Achsen der IMU. Dadurch kann Orientierung bestimmt werden. Generell gilt $\sqrt{acc_x^2+acc_y^2+acc_z^2}=g$
-Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte immer senkrecht zum Gravitationsvektor steht.
+Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte immer senkrecht zum Gravitationsvektor steht und somit keinen Anteil des Gravitationsvektors aufnimmt.
+
+![image](https://github.com/user-attachments/assets/0d127f20-096a-4870-a902-18886f3af49a)
+![image](https://github.com/user-attachments/assets/6f01c241-544a-4805-9333-924c15c99b20)
+
+**welche Achse kann reduziert werden (Beachte den Aufdruck der Achsen auf der IMU und wie sie im Roboter verbaut ist)?**
+
+Antwort: y-Achse
+
 
 ### Gegenstück aus der Mechanik:
 
