@@ -10,9 +10,6 @@ Diese Lektion soll erklären, wie ein Winkel über eine IMU gemessen werden kann
 ![image](https://github.com/user-attachments/assets/c44f7af9-4e67-4d4b-81af-5215f1ecf454)
 
 
-
-# physikalische Funktionsweise 
-
 ## Accelerometer /Beschleunigungssensor
 
 ### Aufgabe beim Roboter:
@@ -32,6 +29,13 @@ Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte immer s
 Antwort: y-Achse
 
 
+
+Das nun reduzierte System ist $\sqrt{acc_x^2+acc_z^2}=g$
+
+
+
+
+# physikalische Funktionsweise 
 ### Gegenstück aus der Mechanik:
 
 ![image](https://github.com/user-attachments/assets/9aa5b4c4-9f4c-4511-9e33-6236fc3883af)
