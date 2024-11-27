@@ -7,7 +7,8 @@ Roboter soll aufrecht stehen, ist jedoch in aufrechter Lage instabil, dh Roboter
 Diese Lektion soll erklären, wie ein Winkel über eine IMU gemessen werden kann. IMU verfügt über Beschleunigungssensor und Gyroskop. Zu erst werden die physikalischen Fukionsweisen erklärt, dann Datenverarbeitung und am Schluss wie man damit in Arduino IDE programmieren kann.
 
 
-![[Pasted image 20241127142951.png]]
+![image](https://github.com/user-attachments/assets/c44f7af9-4e67-4d4b-81af-5215f1ecf454)
+
 
 
 # physikalische Funktionsweise 
@@ -25,7 +26,8 @@ Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte immer s
 
 ### Gegenstück aus der Mechanik:
 
-![[Pasted image 20241126164440.png]]
+![image](https://github.com/user-attachments/assets/9aa5b4c4-9f4c-4511-9e33-6236fc3883af)
+
 
 Wird eine Masse, welche elastisch verbunden ist, beschleunigt, bleibt sie aufgrund ihrer Trägheit erst zurück und es entsteht eine releative Verschiebung $\Delta s$. Erst wenn die elastische Kraft $F_E$  groß genug ist um die Massenträgheit $F=m*a$  zu überwinden wird sich die Masse bewegen. Kann man die Kraft $F_E$  messen, so kann man die Verschiebung $\Delta S$ berechnen.
 
@@ -40,11 +42,7 @@ https://youtu.be/KuekQ-m9xpw
 
 $C=\frac{\varepsilon  *A}{d}$
 
-![[funktionsprinzip_beschleunigungssensor_de.jpg ]]
-	von https://www.bosch-mobility.com/de/loesungen/sensoren/peripherer-beschleunigungssensor/
-
-![[Pasted image 20241126162923.png]]
-	von https://www.thomas-wilhelm.net/arbeiten/funksensoren.pdf
+![image](https://github.com/user-attachments/assets/4ae052ca-bd89-4652-b14e-066fb791692f)
 
 
 Die Distanz d ändert sich durch Bewegung der Seismischen Masse aufgrund ihrer Massenträgheit. 
