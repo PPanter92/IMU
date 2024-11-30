@@ -22,12 +22,11 @@ Der Accelerometer /Beschleunigungssensor misst die translatorische Beschleunigun
 
 Selbst wenn der Roboter still steht, wirken Kräfte auf ihn, vor allem die Gravitationskraft, welche wir uns zur Nutze machen können, um seinen Neigungswinkel zu besitmmen. Je nach Orientierung des Roboters im Raum, verteilt sich diese Kraft auf die 3 Achsen der IMU. Dadurch kann Orientierung bestimmt werden. Generell gilt $\sqrt{acc_x^2+acc_y^2+acc_z^2}=g$
 
-![image](https://github.com/user-attachments/assets/c2be409f-ff3c-4928-a4fe-9e8a07fe7704)
-![image](https://github.com/user-attachments/assets/37c935f7-4180-4ed1-b548-0607257865b6)
-
-
 Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte im normalen Betrieb immer senkrecht zum Gravitationsvektor steht und somit keinen Anteil des Gravitationsvektors aufnimmt.
 
+
+![image](https://github.com/user-attachments/assets/37c935f7-4180-4ed1-b548-0607257865b6)
+![image](https://github.com/user-attachments/assets/c2be409f-ff3c-4928-a4fe-9e8a07fe7704)
 ![image](https://github.com/user-attachments/assets/7b6ebb64-442b-40c2-8db8-4366414f648b)
 
 
