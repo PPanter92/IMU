@@ -1,3 +1,307 @@
+__Sascha:__
+- Zwei Termine
+	- 1. Termin - IMU kalibrieren und auslesen
+		-  [x] Wiederholung (Kurz) warum IMU nutzen
+		-  [x] IMU im System vorstellen - mit Ausrichtung?
+		-  [x] IMU-Achsen vorstellen
+		-  [x] Beschleunigungen aus makroskopischer Sicht, anschließend Acc-Funktionsweise erläutern
+		-  [ ] Winkelgeschwindigkeit aus makroskopischer Sicht, anschließend Gyr-Funktionsweise erläutern
+		-  [x] Wie IMU Auslesen - Library
+		-  [x] Transformation Bytes zu Einheit
+		-  [x] __Kalibriermethoden (Optional in 2. Termin)__
+			-  [x] Winkeloffset Acc durch ungenaue Montage
+			-  [x] Winkelgeschwindigkeit - ruhige Lage sollte 0 rad/s zeigen 
+
+	- 2. Termin - Gyro-Sensorwerte Integrieren und Sensorfusion
+		-  [ ] Hinweis geben: Infos aus den vorherigen Lektionen werden vorausgesetzt
+		-  [x] Warum benötigen wir eine Sensorfusion?
+			-  [x] Vor und Nachteile jeder Sensorart erläutern
+			-  [x] Aufzeigen, welchen Vorteil eine Fusion bietet 
+		-  [x] Komplementärfilter erklären (evtl zeigen, dass es komplexere gibt)
+			-  [x] Wie?
+		-  [x] Notwendigkeit der Integration der Gyroscope Werte aufzeigen und umsetzen
+		-  [x] Filter umsetzen
+		-  [x] __Kalibriermethoden (Optional in 2. Termin)__
+			-  [x] Winkeloffset Acc durch ungenaue Montage
+			-  [x] Winkelgeschwindigkeit - ruhige Lage sollte 0 rad/s zeigen 
+
+# Funktion im Robotor, warum benötigt
+
+Ein selbstbalancierender Roboter stellt ein klassisches Beispiel für ein invertiertes Pendel dar. Ein invertiertes Pendel ist ein System, das von Natur aus instabil ist und somit bei kleinen Auslenkungen aus der Ruhelage fallen würde. Damit der Roboter aufrecht stehen kann muss er kontinuierlich aktiv stabilisiert werden muss. Die geschieht über Aktoren, in unserem Roboter die Elektromotren, welche die Neigung des Roboters ausgleichen. Damit dies geschehen kann muss aber der aktuelle Neigungswinkel bekannt sein. Um diesen präzise und schnell messen zu können verwenden wir eine Inertial Measurement Unit (IMU). Die IMU ist ein Sensor, der aus einem Beschleunigungsmesser (Accelerometer) und einem Gyroskop besteht. Der Beschleunigungsmesser misst die linearen Beschleunigungen in verschiedenen Achsen, während das Gyroskop die Winkelgeschwindigkeit um diese Achsen erfasst. Durch die Kombination dieser Messungen kann die IMU die Neigungswinkel und die Bewegungsdynamik des Roboters bestimmen.
+
+
+![Pasted image 20241127142951](https://i.imgur.com/jvITohU.png)
+
+
+**video / gif wie roboter einfach umfällt vs wie er sich stabilisiert**
+
+Diese Lektion soll zeigen, wie ein Winkel über eine IMU gemessen und im Code verwendet werden kann. Zu erst werden die physikalischen Fukionsweisen des Beschleunigungssensor und des Gyroskop erklärt. Anschließend wird kurz die serielle Kommunikation über I2C erläutert und am Schluss, wie man mit den Sensordaten in der Arduino IDE programmieren kann.
+
+
+
+
+## Accelerometer /Beschleunigungssensor
+
+### Aufgabe beim Roboter:
+
+Der Accelerometer /Beschleunigungssensor misst die translatorische Beschleunigung - also die Beschleunigung entlang einer linearen Achse. Die IMU verfügt über 3 Accelerometer, welche jeweils senkrecht zueinander liegen, sodass Aussagen über die Beschleunigung im Raum getroffen werden können.
+
+### aus Beschleunigung Winkel berechnen
+
+Selbst wenn der Roboter still steht, wirken Kräfte auf ihn, vor allem die Gravitationskraft, welche wir uns zunutze machen können, um seinen Neigungswinkel zu bestimmen. Je nach Orientierung des Roboters im Raum, verteilt sich diese Kraft auf die 3 Achsen der IMU. Dadurch kann seine Orientierung bestimmt werden. Generell gilt $\sqrt{acc_x^2+acc_y^2+acc_z^2}=g$
+
+![6in1 03c ww](https://i.imgur.com/eM6ynt7.png)
+**mit allgemeinem bild ersetzen ohne IMU**
+
+Beim Roboter kann dies aber auf 2 Achsen reduziert werden, da die dritte im normalen Betrieb immer senkrecht zum Gravitationsvektor steht und somit keinen Anteil des Gravitationsvektors aufnimmt.
+
+![Pasted image 20241127150900](https://i.imgur.com/BHS08zW.png)
+
+![Pasted image 20241127150917](https://i.imgur.com/6cEWm3b.png)
+**evtl ansicht seitlich**
+
+**welche Achse kann reduziert werden? (Beachte den Aufdruck der Achsen auf der IMU und wie sie im Roboter verbaut ist)**
+
+Antwort: y-Achse 
+![MPU 6050 Accel and Gyro Module Axis Orientation 3 2](https://i.imgur.com/s4hhdIV.jpeg)
+**ersetzen mit bild im raum mit senkrechter achse**
+
+
+Das nun reduzierte System ist $\sqrt{acc_x^2+acc_z^2}=g$
+Wenn  $acc_x$ und $acc_z$ gemessen werden, kann Mithilfe von simplen trigonomerischen Zusammenhängen der Winkel $\theta$  berechnet werden.
+
+![Pasted image 20241127154236](https://i.imgur.com/eyEKJkO.png)
+![Pasted image 20241127154259](https://i.imgur.com/L2DG6QS.png)
+
+Überlege welche trig Funktion grundsätzlich verwendet Werden kann, um aus den bekannten Werten  $acc_x$ und $acc_z$ der Winkel $\theta$  zu bestimmen
+
+
+Es ist von Vorteil, wenn die Nulllage bei $\theta=0°$ liegt, da Auslenkungen um diese Nulllage bedeuten, dass $\theta$  von 0° bis +90 bzw 0 bis -90° geht **begründung***
+wie lautet dann die Berechnung für $\theta$?
+
+Anwort: atan2(z,-x)
+
+
+
+# physikalische Funktionsweise 
+
+## Accelerometer
+
+### Gegenstück aus der Mechanik:
+
+Der grundlegende physikalische Hintergrund eines Accelerometers basiert auf dem Konzept der seismischen Masse. Eine seismische Masse ist eine Masse, die nicht starr, sondern elastisch mit einem System verbunden ist. Wenn das System  beschleunigt wird, bleibt die seismische Masse aufgrund ihrer Trägheit zunächst zurück, was zu einer relativen Verschiebung Δs zwischen der Masse und dem System führt. Diese Verschiebung erzeugt eine elastische Kraft $F_E$​, die proportional zur Verschiebung ist.
+
+Die Trägheitskraft $F=m*a$ (wobei m die Masse und a die Beschleunigung ist) wirkt der elastischen Kraft entgegen. Die seismische Masse bewegt sich erst dann, wenn die elastische Kraft $F_E$ groß genug ist, um die Trägheitskraft zu überwinden.
+
+![Pasted image 20241126164440](https://i.imgur.com/kenJk9n.png)
+
+Durch die Messung der elastischen Kraft $F_E$ kann die Beschleunigung a berechnet werden. Die elastische Kraft ist proportional zur Verschiebung $\Delta s$, und durch die Kenntnis der Federkonstanten des Systems kann die Beschleunigung bestimmt werden. Dies ist das grundlegende Prinzip, auf dem ein Accelerometer basiert.
+
+
+### Kapazitiver Beschleunigungssensor
+
+Der tatsächliche, elektro-mechanische Sensor basiert auf der elektrischen Kapazität. Er besteht aus zwei Elektroden, eine davon ist fest verbaut und die andere kann frei an einem Anker als seismische Masse schwingen. 
+Die Kapazität $C$ eines Kondensators folgt der Formel $C=\frac{\varepsilon  *A}{d}$
+Die Distanz d zwischen den Kondensatorplatten ändert sich durch Bewegung der Seismischen Masse (aufgrund ihrer Massenträgheit). 
+
+![Pasted image 20241129160558](https://i.imgur.com/q7KIjEg.png)
+
+Für eine genauere Messung wird nicht nur ein Kondensator verwendet, sondern mehrere, welche über den kammförmigen Aufbau der Elektroden entstehen. Einen solchen Aufbau nennt man Differentialkondensator. Dieser vergleicht die Kapazitäten von mehreren Kondensatoren. Wird der Abstand $D_1$ auf der einen Seite größer wird der Abstand $D_2$ auf der anderen Seite kleiner. Somit ändern sich auch die beiden Kapazitäten und ihre Verhältnisse zueinander. Dies ermöglicht eine genauere Messung der Bewegung und damit der Beschleunigung.
+https://www.mdpi.com/2504-3900/1/4/592
+
+![Pasted image 20241126162923](https://i.imgur.com/5jvSlY6.png)
+	von https://www.thomas-wilhelm.net/arbeiten/funksensoren.pdf
+
+![Pasted image 20241203144858](https://i.imgur.com/IYKDBZm.png)
+https://youtu.be/KZVgKu6v808?t=118
+
+
+https://moodle.ruhr-uni-bochum.de/pluginfile.php/4569060/mod_resource/content/0/Mechanische%20Sensoren.pdf
+
+https://youtu.be/KuekQ-m9xpw
+
+
+
+
+
+## Gyroskop 
+
+### Gegenstück aus der Mechanik
+
+![svhgnhkb](https://i.imgur.com/Gr6jjp8.gif)
+
+![svhgnhkf](https://i.imgur.com/f7MpYYX.gif)
+
+![svhgnhln 1](https://i.imgur.com/YzckYKn.gif)
+
+
+Die Messung eines Gyroskops basiert auf der Corioliskraft.
+$\vec a_C=-2*(\vec \omega \times \vec v)$
+
+
+
+### Kapazitiver Sensor
+
+Ein typisches elektro-mechanisches Gyroskop enthält eine kleine, schwingende Masse, die durch elektrostatische Kräfte in Bewegung gehalten wird. Wenn das Gerät eine Drehung erfährt, bewirkt die Corioliskraft eine Ablenkung dieser schwingenden Masse. Diese Ablenkung wird durch kapazitive Sensoren gemessen, die die Änderung der elektrischen Kapazität erfassen. Diese Messungen werden anschließend in elektrische Signale umgewandelt, welche die Winkelgeschwindigkeit des Systems darstellen.
+
+![Pasted image 20241203144005](https://i.imgur.com/9LeAVwm.png)
+
+https://youtu.be/V6XSsNAWg00?t=528
+
+http://www.dieter-heidorn.de/Physik/VS/Mechanik/K08_Kreisbewegung/K08_Kreisbewegung.html
+
+
+Ein Gyroskop ist ein Sensor, der die Winkelgeschwindigkeit misst, also wie schnell sich ein Objekt um eine Achse dreht. Der grundlegende physikalische Hintergrund eines Gyroskops basiert auf dem Prinzip der Kreiselstabilität und der Corioliskraft.
+
+Ein typisches Gyroskop enthält eine rotierende Masse, die als Kreisel bezeichnet wird. Wenn der Kreisel rotiert, erzeugt er aufgrund seiner Trägheit einen Drehimpuls. Dieser Drehimpuls bleibt konstant, solange keine äußeren Drehmomente auf den Kreisel wirken. Wenn das Gyroskop gedreht wird, wirkt eine Corioliskraft auf die rotierende Masse.
+
+Die Corioliskraft FC​ ist proportional zur Winkelgeschwindigkeit ω und zur Geschwindigkeit der rotierenden Masse v. Sie kann durch die folgende Formel beschrieben werden:
+
+FC​=2⋅m⋅v⋅ω
+
+wobei m die Masse der rotierenden Scheibe ist.
+
+Diese Corioliskraft führt zu einer Verschiebung der rotierenden Masse, die von Sensoren im Gyroskop gemessen wird. Die gemessene Verschiebung ist proportional zur Winkelgeschwindigkeit ω. Durch die Kenntnis der Masse und der Geschwindigkeit der rotierenden Scheibe kann die Winkelgeschwindigkeit berechnet werden.
+
+Ein Gyroskop nutzt also die Corioliskraft, die auf eine rotierende Masse wirkt, um die Winkelgeschwindigkeit zu messen. Diese Messung ermöglicht es, die Drehbewegung eines Objekts präzise zu erfassen und ist ein wesentlicher Bestandteil der Inertial Measurement Unit (IMU).
+
+
+***signal wir aufbereitet und analog weitergegeben***
+
+
+# Ausgangssignal des Sensors
+
+Die von uns eingesetzte IMU, die MPU-6050, gibt ihre Messwerte als digitale Signale über die I2C-Schnittstelle aus. Die I2C-Schnittstelle ermöglicht eine einfache Kommunikation zwischen der MPU-6050 und dem Microcontroller. Die MPU-6050 hat eine feste I2C-Adresse, über die sie angesprochen wird. Die Messwerte der Sensoren werden in speziellen Registern gespeichert, die über I2C ausgelesen werden können.
+
+Die Rohdaten, die von der MPU-6050 ausgegeben werden, sind 16-Bit-Werte, die die Beschleunigung in den jeweiligen Achsen repräsentieren. Diese Rohdaten müssen vom Microcontroller empfangen und in physikalische Einheiten umgerechnet werden. Die Datenübertragung erfolgt in der Regel in mehreren Schritten:
+
+1. **I2C-Initialisierung**: Der Microcontroller initialisiert die I2C-Schnittstelle und stellt eine Verbindung zur MPU-6050 her.
+2. **Registerauswahl**: Der Microcontroller wählt die Register aus, die die gewünschten Messwerte enthalten.
+3. **Datenübertragung**: Die Rohdaten werden aus den Registern der MPU-6050 ausgelesen und in den Speicher des Microcontrollers übertragen.
+
+
+
+# über Bib und später Register Rohdaten einlesen
+
+
+
+
+# Signal im Arduino Code nutzen
+
+Um die Rohdaten der MPU-6050 in physikalische Einheiten umzuwandeln, müssen wir den Messbereich und die Auflösung des Sensors verstehen. Diese beiden Größen sind entscheidend für die Genauigkeit und den Anwendungsbereich der Messungen bzw von Sensoren im Allgemeinen.
+
+**Auflösung**: Die Auflösung eines Sensors gibt an, wie fein die Messungen sind, also wie viele unterschiedliche Werte der Sensor innerhalb seines Messbereichs unterscheiden kann. 
+
+**Messbereich**: Der Messbereich eines Sensors gibt an, welchen maximalen Werte der Sensor messen kann. Bei einem Accelerometer wird der Messbereich häufig in der Einheit $g$ angegeben, wobei $g$ die Erdbeschleunigung (ca. $9,81\ m/s²$) darstellt. Ein größerer Messbereich ermöglicht es, höhere Beschleunigungen zu messen, allerdings ist die Genauigkeit dann geringer, da ein größerer Bereich, bei der gleichen Auflösung, größere Sprünge zwischen den einzelen Schritten hat. 
+
+Es muss also immer überlegt werden, wie groß man den Messbereich wählt. Ein zu großer Messbereich liefert ungenauere Messungen und somit auch eine schlechtere Regelung, jedoch kann es bei einem zu kleinen Messbereich passieren, dass ein Wert nicht gemessen werden kann. *Bei komplexeren Systemen verwendet man häufig mehrere Sensoren, um sowohl einen großen Messbereich als auch eine gute Auflösung zu erzielen.* Bei unserem Roboter arbeiten wir aber nur mit einem Sensor 
+
+![Pasted image 20241129151137](https://i.imgur.com/lqRcx48.png)
+Oben: größerer Messbereich, dafür schlechtere Genauigkeit, da mehr Abstand zwischen den Punkten
+
+Unten: geringerer Messbereich, dafür genauere Messung möglich
+
+
+
+Die von uns verwendete MPU-6050 bietet verschiedene Messbereiche, die über die Konfiguration des Sensors eingestellt werden können. Die Messbereiche sind ±2g, ±4g, ±8g und ±16g. Die Auflösung ist fest und beträgt 16 bit.
+
+**wie viele Zahlen können mit 16 bit dargestellt werden?** 
+2^16
+
+
+Wir verwenden den Messbereich +-2g, **Begründung...** 
+Wie kann man die Rohdaten auf physikalische Einheiten in $m/s^2$  umrechnen? **Faktor...**
+Umrechnungsfaktor=655364g​=655364×9.81m/s^2​≈0.0006m/s^2 pro LSB
+
+Da die MPU-6050 oft mit einem Umrechnungsfaktor von 16384 für den ±2g-Bereich angegeben wird, bedeutet dies, dass:
+1LSB=163842g​=163842×9.81m/s2​≈0.0012m/s2
+
+
+# Messung verbessern
+
+## Vor- und Nachteile der beiden Sensoren
+
+### Beschleunigungssensor
+
+**Vorteile:**
+
+1. **Einfache Messung von linearen Beschleunigungen**: Beschleunigungssensoren messen direkt die linearen Beschleunigungen entlang ihrer Achsen.
+2. **Geringer Drift**: Beschleunigungssensoren haben in der Regel einen geringen Drift, was bedeutet, dass ihre Messungen über längere Zeiträume stabil bleiben.
+3. **Kostengünstig und kompakt**: Diese Sensoren sind oft kostengünstig und können in sehr kleinen Formfaktoren hergestellt werden.
+
+**Nachteile:**
+
+1. **Rauschen**: Beschleunigungssensoren sind anfällig für Rauschen, was zu ungenauen Messungen führen kann.
+2. **Empfindlichkeit gegenüber Vibrationen**: Sie können durch Vibrationen und andere externe Kräfte beeinflusst werden, was zu fehlerhaften Messungen führt.
+3. **Schwierigkeiten bei der Bestimmung der Orientierung**: Beschleunigungssensoren allein können die Orientierung eines Objekts nicht zuverlässig bestimmen, insbesondere wenn das Objekt in Bewegung ist.
+
+### Gyroskop
+
+**Vorteile:**
+
+1. **Direkte Messung der Winkelgeschwindigkeit**: Gyroskope messen direkt die Winkelgeschwindigkeit, was für die Bestimmung der Drehbewegung eines Objekts nützlich ist.
+2. **Hohe Genauigkeit bei kurzfristigen Messungen**: Gyroskope bieten eine hohe Genauigkeit und schnelle Reaktionszeiten bei der Messung von Drehbewegungen.
+
+**Nachteile:**
+
+1. **Drift**: Gyroskope sind anfällig für Drift, was bedeutet, dass ihre Messungen über längere Zeiträume ungenau werden können.
+2. **Rauschen**: Auch Gyroskope können Rauschen in ihren Messungen aufweisen, was die Genauigkeit beeinträchtigen kann.
+3. **Kosten und Komplexität**: Hochpräzise Gyroskope können teuer und komplex in der Herstellung sein.
+
+
+
+## Sensorfusion mit Komplementärfilter
+
+Bei einer Sensorfusion werden die Messdaten verschiedener Sensoren kombiniert, um ein qualitativ hochwertigeres Messsignal zu erhalten. In unserem Fall werden die aus Gyroskop und Accelerometer berechneten Winkel in einem Komplementärfilter kombiniert. Die zugrundeliegende Idee ist, ein Winkelsignal zu berechnen, welches aus Anteilen des Gyroskop-Winkels und des Accelerometer-Winkels besteht. Das dabei entstehende Winkelsignal kombiniert die Stärken beider Sensortypen. 
+Über einen Gewichtungsfaktor $\alpha$ lassen sich die Anteile von Gyroskop und Accelerometer verändern. Das neue Winkelsignal entsteht durch eine Summierung der Anteile von Accelerometer- und Gyroskopwinkel. 
+
+$Winkel_K=\alpha*Winkel_{Gyro} + (1-\alpha)*Winkel_{Acc}$
+
+***vll lieber k statt alpha***
+
+Den Komplementärfilter macht vor allem seine einfache Implementierung und seine Echtzeitfähigkeit aus. Aufgrund seiner Einfachheit kann der Komplementärfilter problemlos auf Mikrocontrollern ausgeführt werden, wohingegen komplexere Fiter eventuell längere Rechenzeiten benötigen und somit den Ablauf des Programms verzögern. Durch die Verwendung des Komplementärfilters können die Nachteile der einzelnen Sensoren minimiert und eine präzisere und zuverlässigere Regelung des Roboters erreicht werden.
+
+
+
+## Kalibrierung
+
+### Abweichung der Achsen IMU-Roboter
+
+Konstruktionsbedingt kann es vorkommen, dass die IMU nicht exakt senkrecht zur Roboterachse montiert ist. Diese Fehlstellung kann zu ungenauen Messungen führen, da die gemessenen Winkel und Beschleunigungen nicht direkt mit den tatsächlichen Bewegungen des Roboters übereinstimmen.
+Um diese Abweichung zu korrigieren, muss der entsprechende Winkel im Code ausgeglichen werden. Dies kann durch eine Kalibrierung erfolgen, bei der die tatsächliche Ausrichtung der IMU relativ zur Roboterachse bestimmt wird. Überlegt, wie dieser abweichenden Winkel bestimmt und korrigiert werden kann.
+
+![Pasted image 20241203153217](https://i.imgur.com/nMjn6cP.png)
+IMU nicht parallel zur Roboterachse
+
+
+### Sensoroffset
+
+Sensoroffset bezeichnet die Abweichung der Sensorwerte von ihrem idealen Nullpunkt, wenn keine Bewegung stattfindet. Bei einem Gyroskop bedeutet dies, dass im Stillstand nicht alle Achsen den Wert 0°/s messen, sondern kleine Abweichungen aufweisen können. Diese Abweichungen entstehen durch Fertigungstoleranzen, Temperaturänderungen und andere Umwelteinflüsse.
+Um die Sensoroffsets für die Achse zu bestimmen, kann der Roboter für einige Sekunden in einem absolut ruhigen Zustand belassen werden. Während dieser Zeit werden die Messwerte der Gyroskopachsen aufgezeichnet und anschließend Mittelwerte gebildet. 
+$$Offset_Achse=\frac{1}{N}*\sum_{i=1}^N{Messwert_i}$$
+Die IMU-Library bietet zur Messung des Offsets im Stillstand den Funktionsaufruff calcGyroOffsets(true), dessen Ausgang dem zu subtrahierenden Offset entspricht. Diese Funktion könnt ihr nutzen, um die Offset-Werte herauszufinden.
+
+
+Die berechneten Mittelwerte können anschließend von den zukünfitgen Messwerten abgezogen werden, um die tatsächlichen Winkelgeschwindigkeiten zu erhalten.
+$$Gyr_x = Gyr_{x, roh}-Offset_{gyr, x}$$
+
+
+
+Die Kalibrierung der IMU ist ein wesentlicher Schritt, um genaue und zuverlässige Sensordaten zu erhalten. Durch die Korrektur der Ausrichtung der IMU zur Roboterachse und die Bestimmung und Korrektur des Sensoroffsets können die Messungen der IMU optimiert werden. Dies führt zu einer verbesserten Stabilität und Regelung des Roboters, da die Sensordaten präziser die tatsächlichen Bewegungen und Lagen des Roboters widerspiegeln.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Übersicht
 
