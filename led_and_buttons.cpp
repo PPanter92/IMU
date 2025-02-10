@@ -1,104 +1,111 @@
-// Dateiname: led_and_buttons.cpp
+// Filename: led_and_buttons.cpp FINAL
 #ifndef LED_AND_BUTTON
 #define LED_AND_BUTTON
 
 #include <Arduino.h>
 #include "led_and_buttons.h"
 
-extern volatile bool buttonRPressed;
-extern volatile bool buttonLPressed;
+
+// Declare external volatile variables for button states.
+// These variables should be defined elsewhere in the program.
+
+extern volatile bool buttonRPressed; // State of the right button.
+extern volatile bool buttonLPressed; // State of the left button.
+
 
 /**
- * Initialisiert die Pins für eine LED und zwei Tasten mit Interrupts.
+ * Initializes the pins for an LED and two buttons with interrupts.
  * 
- * @param pinLed Pin-Nummer für die LED.
- * @param pinBL Pin-Nummer für den linken Button.
- * @param pinBR Pin-Nummer für den rechten Button.
+ * @param pinLed Pin number for the LED.
+ * @param pinBL Pin number for the left button.
+ * @param pinBR Pin number for the right button.
  */
 void initLedAndButtons(int pinLed, int pinBL, int pinBR) {
-    pinMode(pinLed, OUTPUT); // Setzt den LED-Pin als Ausgang.
-    pinMode(pinBL, INPUT); // Setzt den Pin für den linken Button als Eingang.
-    pinMode(pinBR, INPUT); // Setzt den Pin für den rechten Button als Eingang.
-    attachInterrupt(pinBL, buttonLHandle, FALLING); // Konfiguriert einen Interrupt für den linken Button auf fallende Flanke.
-    attachInterrupt(pinBR, buttonRHandle, FALLING); // Konfiguriert einen Interrupt für den rechten Button auf fallende Flanke.
+    pinMode(pinLed, OUTPUT); // Sets the LED pin as an output.
+    pinMode(pinBL, INPUT); // Sets the pin for the left button as an input.
+    pinMode(pinBR, INPUT); // Sets the pin for the right button as an input.
+    attachInterrupt(pinBL, buttonLHandle, FALLING); // Configures an interrupt for the left button on a falling edge.
+    attachInterrupt(pinBR, buttonRHandle, FALLING); // Configures an interrupt for the right button on a falling edge.
 }
  
 /**
- * Lässt die LED in blockierender Weise blinken.
+ * Makes the LED blink in a blocking manner.
  * 
- * @param pinLed Pin-Nummer der LED.
- * @param interval Zeitintervall in Millisekunden zwischen den Blinkvorgängen.
+ * @param pinLed Pin number of the LED.
+ * @param interval Time interval in milliseconds between blink cycles.
  */
 void blinkLedBlocking(int pinLed, uint32_t interval) {
     static bool toggle = 0;
-    delay(interval); // Verzögert das Programm für das gegebene Intervall.
-    digitalWrite(pinLed, toggle); // Wechselt den Zustand der LED.
-    Serial.println(toggle); // Gibt den aktuellen Zustand der LED aus.
-    toggle = !toggle; // Wechselt den Zustand für das nächste Blinken.
+    delay(interval); // Delays the program for the given interval.
+    digitalWrite(pinLed, toggle); // Toggles the state of the LED.
+    Serial.println(toggle); // Prints the current state of the LED.
+    toggle = !toggle; // Switches the state for the next blink.
 }
 
 /**
- * Lässt die LED in nicht-blockierender Weise blinken.
+ * Makes the LED blink in a non-blocking manner.
  * 
- * @param pinLed Pin-Nummer der LED.
- * @param interval Zeitintervall in Millisekunden zwischen den Blinkvorgängen.
+ * @param pinLed Pin number of the LED.
+ * @param interval Time interval in milliseconds between blink cycles.
  */
 void blinkLedNonBlocking(int pinLed, uint32_t interval) {
     static uint32_t previousMillis = 0;
     static bool toggle = 0;
     uint32_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis; // Aktualisiert die Zeit für das nächste Blinken.
-        digitalWrite(pinLed, toggle); // Wechselt den Zustand der LED.
-        toggle = !toggle; // Umschalten für das nächste Mal.
+        previousMillis = currentMillis; // Updates the time for the next blink.
+        digitalWrite(pinLed, toggle); // Toggles the state of the LED.
+        toggle = !toggle; // Switch state for the next time.
     }
 }
 
 /**
- * Verändert die Helligkeit der LED in einer nicht-blockierenden Weise.
+ * Adjusts the brightness of the LED in a non-blocking manner.
  * 
- * @param pinLed Pin-Nummer der LED.
- * @param interval Zeitintervall in Millisekunden für die Helligkeitsänderung.
+ * @param pinLed Pin number of the LED.
+ * @param interval Time interval in milliseconds for brightness change.
  */
 void fadeLedNonBlocking(int pinLed, uint32_t interval) {
     static uint32_t previousMillis = 0;
     static uint8_t brightness = 0;
-    static uint8_t fadeAmount = 1;
+    static int8_t fadeAmount = 1; // Use int8_t to allow negative values for fade direction
     uint32_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis; // Setzt die Zeit zurück für die nächste Helligkeitsänderung.
-        analogWrite(pinLed, brightness); // Setzt die Helligkeit der LED.
-        brightness += fadeAmount; // Verändert die Helligkeit für den nächsten Durchgang.
+        previousMillis = currentMillis; // Resets the time for the next brightness change.
+        analogWrite(pinLed, brightness); // Sets the LED brightness.
+        brightness += fadeAmount; // Adjusts brightness for the next cycle.
         if (brightness <= 0 || brightness >= 255) {
-            fadeAmount = -fadeAmount; // Ändert die Richtung der Helligkeitsänderung.
+            fadeAmount = -fadeAmount; // Reverses the direction of brightness change.
         }
     }
 }
 
+
 /**
- * Interrupt Service Routine (ISR) für den rechten Button.
- * Verhindert das Prellen des Buttons durch Implementierung einer einfachen Entprellung.
+ * Interrupt Service Routine (ISR) for the right button.
+ * Prevents button bouncing by implementing a simple debounce mechanism.
  */
 void buttonRHandle() {
-    static uint32_t lastPressed = millis(); // Letzte Zeit, zu der der Button gedrückt wurde.
-    uint32_t currentMillis = millis(); // Aktuelle Zeit.
-    if (currentMillis - lastPressed > 250) { // Prüft, ob mehr als 50 Millisekunden seit dem letzten Drücken vergangen sind.
-        lastPressed = currentMillis; // Aktualisiert die letzte Druckzeit.
-        buttonRPressed = !buttonRPressed; // Toggelt den Zustand des rechten Buttons.
+    static uint32_t lastPressed = millis(); // Last time the button was pressed.
+    uint32_t currentMillis = millis(); // Current time.
+    if (currentMillis - lastPressed > 250) { // Checks if more than 250 milliseconds have passed since the last press.
+        lastPressed = currentMillis; // Updates the last press time.
+        buttonRPressed = !buttonRPressed; // Toggles the state of the right button.
     }
 }
 
 /**
- * Interrupt Service Routine (ISR) für den linken Button.
- * Verhindert das Prellen des Buttons durch Implementierung einer einfachen Entprellung.
+ * Interrupt Service Routine (ISR) for the left button.
+ * Prevents button bouncing by implementing a simple debounce mechanism.
  */
 void buttonLHandle() {
-    static uint32_t lastPressed = millis(); // Letzte Zeit, zu der der Button gedrückt wurde.
-    uint32_t currentMillis = millis(); // Aktuelle Zeit.
-    if (currentMillis - lastPressed > 250) { // Prüft, ob mehr als 50 Millisekunden seit dem letzten Drücken vergangen sind.
-        lastPressed = currentMillis; // Aktualisiert die letzte Druckzeit.
-        buttonLPressed = !buttonLPressed; // Toggelt den Zustand des linken Buttons.
+    static uint32_t lastPressed = millis(); // Last time the button was pressed.
+    uint32_t currentMillis = millis(); // Current time.
+    if (currentMillis - lastPressed > 250) { // Checks if more than 250 milliseconds have passed since the last press.
+        lastPressed = currentMillis; // Updates the last press time.
+        buttonLPressed = !buttonLPressed; // Toggles the state of the left button.
     }
 }
+
 
 #endif
