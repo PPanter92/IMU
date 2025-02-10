@@ -4,46 +4,46 @@
 #include <Arduino.h>
 #include "ultrasonic_sensor.h"
 
-// Global variables for managing the ultrasonic sensor.
-static int pinTrigger, pinEcho = 0; // Pins for triggering and receiving the echo.
-volatile static uint32_t echoDuration, interval = 0; // Stores the echo duration and trigger interval.
-volatile static bool echoRecieved = false; // Flag to indicate if an echo was received.
+// Globale Variablen zur Verwaltung des Ultraschallsensors.
+static int pinTrigger, pinEcho = 0;
+volatile static uint32_t echoDuration, interval = 0;
+volatile static bool echoRecieved = false;
 
 /**
- * Initializes the ultrasonic sensor with the given pins and measurement interval.
+ * Initialisiert den Ultraschallsensor mit den gegebenen Pins und dem Messintervall.
  * 
- * @param pinTriggerUs Pin number for the ultrasonic sensor's trigger.
- * @param pinEchoUs Pin number for receiving the echo.
- * @param intervalUs Time interval in microseconds at which the sensor is triggered.
+ * @param pinTriggerUs Pin-Nummer für den Trigger des Ultraschallsensors.
+ * @param pinEchoUs Pin-Nummer für das Echo des Ultraschallsensors.
+ * @param intervalUs Zeitintervall in Mikrosekunden, in dem der Sensor getriggert wird.
  */
 void initUsSensor(int pinTriggerUs, int pinEchoUs, uint32_t intervalUs) {
   pinTrigger = pinTriggerUs;
   pinEcho = pinEchoUs;
   interval = intervalUs;
-  pinMode(pinTrigger, OUTPUT); // Set the trigger pin as an output.
-  pinMode(pinEcho, INPUT); // Set the echo pin as an input.
+  pinMode(pinTrigger, OUTPUT); // Setze den Trigger-Pin als Ausgang.
+  pinMode(pinEcho, INPUT); // Setze den Echo-Pin als Eingang.
   attachInterrupt(pinEcho, pulsdurationHandle, CHANGE); // Attach an interrupt handler to detect echo signals.
 }
 
 /**
- * Sends a trigger signal to start a distance measurement.
+ * Sendet ein Trigger-Signal, um die Entfernungsmessung zu starten.
  * 
- * @param intervalTrigger Minimum interval between trigger events.
+ * @param intervalTrigger Das minimale Intervall zwischen den Trigger-Ereignissen.
  */
 void sendTriggerUs(uint32_t intervalTrigger) {
-  static uint32_t previousMicros = micros(); // Timestamp of the last trigger.
+  static uint32_t previousMicros = micros(); // Zeitpunkt des letzten Triggers.
   unsigned long currentMicros = micros();
-  static bool pinState = LOW; // Current state of the trigger pin.
+  static bool pinState = LOW; // Aktueller Zustand des Trigger-Pins.
 
-  // Send trigger signal if the predefined interval has elapsed.
+  // Trigger-Signal senden, wenn das vorgegebene Intervall abgelaufen ist.
   if (currentMicros - previousMicros >= intervalTrigger) {
     if (pinState == LOW) {
-      digitalWrite(pinTrigger, HIGH); // Set the trigger pin HIGH.
+      digitalWrite(pinTrigger, HIGH); // Setze den Trigger-Pin auf HIGH.
       pinState = HIGH;
-      previousMicros = currentMicros; // Update the last trigger timestamp.
+      previousMicros = currentMicros; // Aktualisiere die Zeit für den letzten Trigger.
     }
   }
-  // Set the trigger pin back to LOW after 12 microseconds.
+  // Setze den Trigger-Pin nach 12 Mikrosekunden zurück auf LOW.
   if (pinState == HIGH && (currentMicros - previousMicros >= 12)) {
     digitalWrite(pinTrigger, LOW);
     pinState = LOW;
@@ -51,43 +51,40 @@ void sendTriggerUs(uint32_t intervalTrigger) {
 }
 
 /**
- * Checks if a new distance measurement is available.
+ * Überprüft, ob eine neue Entfernungsmessung verfügbar ist.
  * 
- * @return True if a new measurement is available, otherwise False.
+ * @return True, wenn eine neue Messung verfügbar ist, sonst False.
  */
 bool newDistanceUs() {
-  sendTriggerUs(interval); // Trigger the ultrasonic sensor.
-  return echoRecieved; // Return whether an echo was received.
+  sendTriggerUs(interval); // Trigger den Ultraschallsensor.
+  return echoRecieved; // Gibt zurück, ob ein Echo empfangen wurde.
 }
 
 /**
- * Returns the measured distance and resets the reception status.
+ * Gibt die gemessene Entfernung zurück und setzt den Empfangsstatus zurück.
  * 
- * The measured echo duration is converted to distance using the approximation:
- * - Sound travels at ~343 m/s or ~0.0343 cm/µs
- * - Since the pulse travels to the object and back, the distance is calculated as `duration / 58`
- * 
- * @return The calculated distance in centimeters.
+ * @return Die berechnete Entfernung in Zentimetern.
  */
 uint16_t getDistanceUs() {
-  echoRecieved = false; // Reset the reception status to be ready for the next measurement.
-  return echoDuration / 58; // Calculate distance based on echo duration.
+  echoRecieved = false; // Reset des Empfangsstatus, um für die nächste Messung bereit zu sein.
+  return echoDuration / 58; // Berechne die Entfernung basierend auf der Dauer des Echos.
 }
 
 /**
- * Interrupt Service Routine (ISR) for capturing the echo duration.
- * This function is called whenever the state of the echo pin changes.
+ * Interrupt Service Routine zur Erfassung der Dauer des Echos.
+ * Wird aufgerufen, wenn der Zustand des Echo-Pins sich ändert.
  */
 void pulsdurationHandle() {
-  static uint32_t echoStart = 0; // Timestamp for the start of the echo.
-  uint8_t currentState = digitalRead(pinEcho); // Read the current state of the echo pin.
+  static uint32_t echoStart = 0; // Startzeitpunkt des Echos.
+  uint8_t currentState = digitalRead(pinEcho); // Lese den aktuellen Zustand des Echo-Pins.
 
   if (currentState == HIGH) {
-    echoStart = micros(); // Store start time when the echo begins.
+    echoStart = micros(); // Startzeit speichern, wenn das Echo beginnt.
   } else if (currentState == LOW) {
-    echoDuration = micros() - echoStart; // Compute the duration of the echo pulse.
-    echoRecieved = true; // Set flag indicating that an echo was received.
+    echoDuration = micros() - echoStart; // Berechne die Dauer des Echos.
+    echoRecieved = true; // Setze den Status, dass ein Echo empfangen wurde.
   }
 }
+
 
 #endif
