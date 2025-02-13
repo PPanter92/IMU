@@ -38,11 +38,3 @@ Die beiden Signale (A und B) werden als Quadratur-Signale bezeichnet, da sie pha
 4. A = LOW, B = HIGH
 
 Die Reihenfolge, in der diese Zustände auftreten, bestimmt die Drehrichtung. In einer Richtung werden die Zustände beispielsweise als 1 → 2 → 3 → 4 durchlaufen, in der anderen Richtung als 4 → 3 → 2 → 1.
-
-### Zusammenfassung
-
-Die Drehrichtung wird durch die relative Phasenlage der beiden Signale (A und B) bestimmt. Die Flankenerkennung und das Auswerten der Reihenfolge der Zustände machen es möglich, präzise zwischen Vorwärts- und Rückwärtsbewegung zu unterscheiden. Dies macht Zwei-Kanal-Hall-Effekt-Sensoren zu einer robusten Lösung für Drehzahl- und Richtungsbestimmung in Encodern.
-
-- [ ] erklären wie dieser Sonsor funktioniert, mit Flanken- und Richtungserkennung?
-- [ ] hall effekt sensor generell erklären?
-- [ ] auf installation eingehen? wie verlötet, wie verkabelt?
