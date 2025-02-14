@@ -10,6 +10,7 @@ Wie diese Impulse in die tatsächliche Winkeländerung des Rades umgerechnet wer
 <br>
 # Funktionsweise des Sensors
 <br>
+
 ## Prinzip 
 <br>
 Der Encoder kann die Drehrichtung der Achse unterscheiden, indem er die relative Phasenverschiebung zwischen den Signalen seiner beiden Hall-Sensoren auswertet. Dafür sind die zwei Hall-Effekt-Sensoren auf der Drehachse um 90° zueinander versetzt angeordnet. Wenn die Achse, und somit die Magnetscheibe, rotiert, erfassen die Hall-Effekt-Sensoren die abwechselnden Magnetpole der Scheibe und senden, je nach Polarität, ein HIGH oder LOW Signal. Aufgrund der Anordnung der beiden Sensoren werden die Magnetpole zeitlich versetzt von den Sensoren erkannt. Durch diese zeitliche Differenz kann die Drehrichtung bestimmt werden.
